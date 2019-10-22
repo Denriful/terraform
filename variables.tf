@@ -5,8 +5,15 @@ variable project {
 }
 variable region {
   description = "Region"
-  default = "europe-west1"
+  default = "us-central1"
+}
+variable zone {
+  description = "Zone"
+  default = "us-central1-a"
 }
 variable disk_image {
   description = "Disk image"
+}
+variable provision_private_key {
+  description = "Private key for provisioners"
 }
