@@ -1,0 +1,4 @@
+gce_ssh_pub_key_file = "~/.ssh/appuser.pub"
+gce_ssh_user = "appuser"
+project = "ruby-app-denriful"
+disk_image = "reddit-base"
