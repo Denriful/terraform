@@ -10,7 +10,18 @@ provider "google" {
 
   #  region = "us-central1"
   region = "${var.region}"
+
 }
+
+resource "google_compute_project_metadata" "default" {
+  metadata {
+    # path to public key
+    ssh-keys = "appuser1:${file("~/.ssh/appuser.pub")} \nappuser2:${file("~/.ssh/appuser.pub")}"
+    #ssh-keys = "${var.gce_ssh_user}:${file(var.gce_ssh_pub_key_file)}"
+  }
+
+}
+
 
 resource "google_compute_instance" "app" {
   name         = "reddit-app"
