@@ -22,3 +22,7 @@ variable disk_image {
 variable provision_private_key {
   description = "Private key for provisioners"
 }
+
+variable count {
+  description = "Number of instances"
+}

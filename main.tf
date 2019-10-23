@@ -24,8 +24,11 @@ resource "google_compute_project_metadata" "default" {
 
 
 resource "google_compute_instance" "app" {
-  name         = "reddit-app"
-  machine_type = "g1-small"
+#  name         = "reddit-app"
+  name         = "reddit-app-${count.index + 1}"
+  count	       = "${var.count}"	
+#  machine_type = "g1-small"
+  machine_type = "f1-micro"
 
   #  zone		= "us-central1-a"
   zone = "${var.zone}"
