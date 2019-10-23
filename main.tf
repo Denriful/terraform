@@ -24,28 +24,35 @@ resource "google_compute_project_metadata" "default" {
 
 
 resource "google_compute_instance" "app" {
-#  name         = "reddit-app"
-  name         = "reddit-app-${count.index + 1}"
+#  name         = "ruby-app"
+  name         = "ruby-app-${count.index + 1}"
   count	       = "${var.count}"	
 #  machine_type = "g1-small"
   machine_type = "f1-micro"
 
   #  zone		= "us-central1-a"
   zone = "${var.zone}"
-  tags = ["reddit-app"]
+  tags = ["ruby-app"]
 
   boot_disk {
     initialize_params {
-      #      image = "reddit-base"
+      #      image = "ruby-base"
       image = "${var.disk_image}"
     }
+  }
+
+  scheduling {
+    preemptible = "True"
+    automatic_restart = "False"
   }
 
   network_interface {
     network = "default"
 
     # use ethemeral ip for access from outside
-    access_config {}
+    access_config {
+      nat_ip = "${google_compute_address.app_ip.address}"
+    }
   }
 
   metadata {
@@ -82,5 +89,22 @@ resource "google_compute_firewall" "firewall_puma" {
   }
 
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["reddit-app"]
+  target_tags   = ["ruby-app"]
+}
+
+resource "google_compute_firewall" "firewall_ssh" {
+  name    = "default-allow-ssh"
+  network = "default"
+  description = "Allow SSH from anywhere"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+}
+
+resource "google_compute_address" "app_ip" {
+  name = "ruby-app-ip"
 }
