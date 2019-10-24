@@ -1,6 +1,6 @@
-terraform {
-  required_version = "0.12.12"
-}
+#terraform {
+#  required_version = "0.12.12"
+#}
 
 provider "google" {
   #  version = "2.0.0"
