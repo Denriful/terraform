@@ -1,7 +1,7 @@
 resource "google_compute_instance" "app" {
 #  name         = "ruby-app"
   name         = "ruby-app-${count.index + 1}"
-  count	       = "${var.count}"	
+#  count	       = "${var.count}"	
 #  machine_type = "g1-small"
   machine_type = "f1-micro"
 

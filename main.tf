@@ -1,9 +1,10 @@
 terraform {
-  required_version = "0.11.11"
+  required_version = "0.12.12"
 }
 
 provider "google" {
-  version = "2.0.0"
+#  version = "2.0.0"
+  version = "~> 2.18.0"
 
   project = "${var.project}"
 
@@ -22,7 +23,7 @@ resource "google_compute_project_metadata" "default" {
 
 module "app" {
   source	= "./modules/app"
-  count		= "2"
+#  count		= "2"
 }
 
 module "vpc" {
