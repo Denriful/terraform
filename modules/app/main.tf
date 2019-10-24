@@ -1,7 +1,7 @@
 resource "google_compute_instance" "app" {
 #  name         = "ruby-app"
   name         = "ruby-app-${count.index + 1}"
-#  count	       = "${var.count}"	
+  count	       = "${var.inst_count}"	
 #  machine_type = "g1-small"
   machine_type = "f1-micro"
 
@@ -17,8 +17,8 @@ resource "google_compute_instance" "app" {
   }
 
   scheduling {
-    preemptible = "True"
-    automatic_restart = "False"
+    preemptible = "true"
+    automatic_restart = "false"
   }
 
   network_interface {
@@ -30,7 +30,7 @@ resource "google_compute_instance" "app" {
     }
   }
 
-  metadata {
+  metadata = {
     # path to public key
     #  ssh-keys = "appuser:${file("/home/sulgin/.ssh/appuser.pub")}"
     ssh-keys = "${var.gce_ssh_user}:${file(var.gce_ssh_pub_key_file)}"
@@ -38,6 +38,7 @@ resource "google_compute_instance" "app" {
 
   # connection settings for provisioners
   connection {
+    host 	= google_compute_instance.app[count.index].network_interface.0.access_config.0.nat_ip
     type        = "ssh"
     user        = "appuser"
     agent       = false

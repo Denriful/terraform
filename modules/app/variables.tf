@@ -21,8 +21,8 @@ variable provision_private_key {
   default = "~/.ssh/appuser"
 }
 
-#variable count {
-#  description = "Number of instances"
-#  default = "1"
-#}
+variable inst_count {
+  description = "Number of instances"
+  default = 1
+}
 

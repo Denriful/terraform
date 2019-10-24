@@ -1,8 +1,8 @@
-variable project {
+variable "project" {
   description = "Project ID"
 }
 
-variable region {
+variable "region" {
   description = "Region"
   default     = "us-central1"
 }
