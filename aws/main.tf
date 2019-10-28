@@ -4,29 +4,175 @@ variable "server_port" {
   default = 8080
 }
 
-output "public_ip" {
-  value		= aws_instance.example.public_ip
-  description	= "Public IP of instance"
+#output "public_ip" {
+#  value		= aws_instance.example.public_ip
+#  description	= "Public IP of instance"
+#}
+
+output "alb_dns_name" {
+  value		= aws_lb.example.dns_name
+  description	= "The domain name of the load balancer"
 }
 
 provider "aws" {
   region = "us-east-2"
 }
 
-resource "aws_instance" "example" {
-  ami	= "ami-0c55b159cbfafe1f0"
+#resource "aws_instance" "example" {
+#  ami	= "ami-0c55b159cbfafe1f0"
+#  instance_type = "t2.micro"
+#  key_name = "appuser"
+#  tags = {
+#    Name = "terraform-example"
+resource "aws_launch_configuration" "example" {
+  image_id	= "ami-0c55b159cbfafe1f0"
   instance_type = "t2.micro"
   key_name = "appuser"
-  tags = {
-    Name = "terraform-example"
-  }
   user_data = <<-EOF
 	      #!/bin/bash
               echo "Hello, World" > index.html
               nohup busybox httpd -f -p ${var.server_port} &
               EOF
-  vpc_security_group_ids = [aws_security_group.instance.id]
+#  vpc_security_group_ids = [aws_security_group.instance.id]
+  security_groups = [aws_security_group.instance.id]
 }
+
+
+# Define ASG
+resource "aws_autoscaling_group" "example" {
+
+  launch_configuration = aws_launch_configuration.example.name
+
+  # lets insert vpc subnet ids from data source to ASG  
+
+  vpc_zone_identifier = data.aws_subnet_ids.default.ids
+
+  # Aim Target Group of ALB to ASG instances
+  # this will tell the ASG to register each instance 
+  # in the Target group when that instance is booting.
+
+  target_group_arns = [aws_lb_target_group.asg-tg.arn]
+
+  # Define Health Check "ELB" instead of default "EC2"
+  # Health Check "ELB" more advanced and robust
+
+  health_check_type = "ELB"
+
+  
+  min_size = 2
+  max_size = 10
+
+  tag {
+    key		= "Name"
+    value	= "terraform-asg-example"
+    propagate_at_launch = true
+    }
+}
+
+
+# add data source to query provider for VPC Subnets ID's
+
+data "aws_vpc" "default" {
+# filter query for "default" vpc
+  default = true
+}
+
+data "aws_subnet_ids" "default" {
+# filter query for default vpc id
+vpc_id = data.aws_vpc.default.id
+}
+
+# add ALB (Application Load Balancer (for HTTP HTTPS traffic))
+
+resource "aws_lb" "example" {
+  name			= "terraform-asg-example-lb"
+  load_balancer_type	= "application"
+  subnets		= data.aws_subnet_ids.default.ids
+  security_groups	= [aws_security_group.alb_sg.id]
+
+}
+
+# define a listener for ALB
+
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.example.arn
+  port		    = 80
+  protocol          = "HTTP"
+
+  # By default, return a simple 404 page
+  
+  default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "404: page not found"
+      status_code  = 404
+    }
+  }
+}
+
+
+# define a listener rule for ALB
+
+resource "aws_lb_listener_rule" "asg" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  condition {
+    field  = "path-pattern"
+    values = ["*"]
+  }
+
+  action {
+    type		= "forward"
+    target_group_arn	= aws_lb_target_group.asg-tg.arn
+  }
+}
+
+
+# add Security Group for ALB
+
+resource "aws_security_group" "alb_sg" {
+  name = "terraform-example-alb-sg"
+
+  # Allow inbound HTTP requests
+  ingress {
+    from_port	= 80
+    to_port	= 80
+    protocol	= "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow all outbound requests
+  egress {
+    from_port	= 0
+    to_port	= 0
+    protocol	= "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
+# Define Target Group for ALB
+
+resource "aws_lb_target_group" "asg-tg" {
+  name		= "terraform-asg-tg-example"
+  port		= var.server_port
+  protocol	= "HTTP"
+  vpc_id	= data.aws_vpc.default.id
+
+  health_check {
+    path		= "/"
+    protocol		= "HTTP"
+    matcher		= "200"
+    interval		= 15
+    timeout		= 3
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+}
+
 
 resource "aws_security_group" "instance" {
   name = "terraform-example-instance"
