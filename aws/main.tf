@@ -182,6 +182,8 @@ resource "aws_security_group" "instance" {
     to_port	= var.server_port
     protocol	= "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+# this is best practice
+#    cidr_blocks = ["amazon-elb/amazon-elb-sg"]
     description = "busybox http server"
   }
 }
