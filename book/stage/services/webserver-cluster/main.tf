@@ -220,6 +220,8 @@ terraform {
    }
 }
 
+# These resources already defined in /stage/services/mysql
+
 # resource "aws_s3_bucket" "terraform_state" {
 #    bucket = "terraform-up-and-running-state-denriful"
 

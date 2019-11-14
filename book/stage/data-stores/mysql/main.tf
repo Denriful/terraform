@@ -42,7 +42,7 @@ resource "aws_db_instance" "example" {
 #  }
 #}
 
-  terraform {
+terraform {
    backend "s3" {
       bucket         = "terraform-up-and-running-state-denriful"
       key            = "stage/data-stores/mysql/terraform.tfstate"
