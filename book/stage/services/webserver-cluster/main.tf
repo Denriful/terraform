@@ -28,14 +28,30 @@ resource "aws_launch_configuration" "example" {
   image_id	= "ami-0c55b159cbfafe1f0"
   instance_type = "t2.micro"
   key_name = "appuser"
-  user_data = <<-EOF
+  #user_data = <<-EOF
 	      #!/bin/bash
-              echo "Hello, World" > index.html
-              nohup busybox httpd -f -p ${var.server_port} &
-              EOF
+  #            echo "Hello, World" > index.html
+  #            echo "${data.terraform_remote_state.db.outputs.address}" >> index.html
+  #            echo "${data.terraform_remote_state.db.outputs.port}" >> index.html
+  #            nohup busybox httpd -f -p ${var.server_port} &
+  #            EOF
+
+  user_data = data.template_file.user_data.rendered
+
 #  vpc_security_group_ids = [aws_security_group.instance.id]
   security_groups = [aws_security_group.instance.id]
 }
+
+data "template_file" "user_data" {
+  template      = file("user-data.sh")
+
+  vars          = {
+    server_port = var.server_port
+    db_address  = data.terraform_remote_state.db.outputs.address
+    db_port     = data.terraform_remote_state.db.outputs.port
+  }
+}
+
 
 
 # Define ASG
@@ -204,40 +220,49 @@ terraform {
    }
 }
 
-resource "aws_s3_bucket" "terraform_state" {
-   bucket = "terraform-up-and-running-state-denriful"
+# resource "aws_s3_bucket" "terraform_state" {
+#    bucket = "terraform-up-and-running-state-denriful"
 
-   # Prevent accidental deletion of this S3 bucket
-   lifecycle {
-      prevent_destroy = true
-   }
+#    # Prevent accidental deletion of this S3 bucket
+#    lifecycle {
+#       prevent_destroy = true
+#    }
 
-   # Enable versioning so we can see the full
-   # revision history of our state files
-   versioning {
-      enabled = true
-   }
+#    # Enable versioning so we can see the full
+#    # revision history of our state files
+#    versioning {
+#       enabled = true
+#    }
 
-   # Enable server-side encryption by default
-   server_side_encryption_configuration {
-      rule {
-         apply_server_side_encryption_by_default {
-            sse_algorithm = "AES256"
-         }
-      }
-   }
+#    # Enable server-side encryption by default
+#    server_side_encryption_configuration {
+#       rule {
+#          apply_server_side_encryption_by_default {
+#             sse_algorithm = "AES256"
+#          }
+#       }
+#    }
 
+# }
+
+# resource "aws_dynamodb_table" "terraform_locks" {
+#    name           = "terraform-up-and-running-locks"
+#    billing_mode   = "PAY_PER_REQUEST"
+#    hash_key       = "LockID"
+
+#    attribute {
+#       name = "LockID"
+#       type = "S"
+#    }
+# }
+
+data "terraform_remote_state" "db" {
+  backend = "s3"
+
+  config = {
+    bucket = "terraform-up-and-running-state-denriful"
+    key    = "stage/data-stores/mysql/terraform.tfstate"
+    region = "us-east-2"
+  }
 }
-
-resource "aws_dynamodb_table" "terraform_locks" {
-   name           = "terraform-up-and-running-locks"
-   billing_mode   = "PAY_PER_REQUEST"
-   hash_key       = "LockID"
-
-   attribute {
-      name = "LockID"
-      type = "S"
-   }
-}
-
 
