@@ -17,14 +17,18 @@ module "webserver_cluster" {
   min_size                = 2
 
   max_size                = 5
+
+  server_port             = 8081
+
+  server_port2            = 22
   }
 
 resource "aws_security_group_rule" "allow_testing_inbound" {
   type              = "ingress"
   security_group_id = module.webserver_cluster.alb_security_group_id
 
-  from_port	  = 12345
-  to_port	    = 12345
+  from_port	  = 22
+  to_port	    = 22
   protocol	  = "tcp"
   cidr_blocks = ["0.0.0.0/0"] 
 }

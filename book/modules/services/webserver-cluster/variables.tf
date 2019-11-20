@@ -4,6 +4,12 @@ variable "server_port" {
   default = 8080
 }
 
+variable "server_port2" {
+  description = "some additional port"
+  type = number
+  default = 20
+}
+
 variable "cluster_name" {
   description = "The name to use for all the cluster resources"
   type = string
