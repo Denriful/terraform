@@ -18,9 +18,11 @@ module "webserver_cluster" {
 
   max_size                = 10
 
+  enable_autoscaling      = true
+
 }
 
-resource "aws_autoscaling_schedule" "scale_out_during_business_hours" {
+/* resource "aws_autoscaling_schedule" "scale_out_during_business_hours" {
   scheduled_action_name  = "scale_out_during_business_hours"
   min_size               = 3
   max_size               = 10
@@ -36,7 +38,7 @@ resource "aws_autoscaling_schedule" "scale_in_at_night" {
   desired_capacity      = 2
   recurrence            = "0 17 * * *"
   autoscaling_group_name = module.webserver_cluster.asg_name
-}
+} */
 
 terraform {
     backend "s3" {

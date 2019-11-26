@@ -48,3 +48,8 @@ locals {
   tcp_protocol    = "tcp"
   all_ips         = ["0.0.0.0/0"]
 }
+
+variable "enable_autoscaling" {
+  description = "If set to true, enable auto scaling"
+  type        = bool
+}
