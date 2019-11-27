@@ -23,6 +23,8 @@ module "webserver_cluster" {
   server_port2            = 22
 
   enable_autoscaling      = false
+
+  enable_new_user_data    = true
   }
 
 resource "aws_security_group_rule" "allow_testing_inbound" {

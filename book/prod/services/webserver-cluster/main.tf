@@ -20,6 +20,7 @@ module "webserver_cluster" {
 
   enable_autoscaling      = true
 
+  enable_new_user_data    = false
 }
 
 /* resource "aws_autoscaling_schedule" "scale_out_during_business_hours" {
