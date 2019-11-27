@@ -341,7 +341,7 @@ resource "aws_autoscaling_schedule" "scale_in_at_night" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
-  count = format("%.1s", var.instance_type) == "t" ? 1 : 0
+  
   alarm_name  = "${var.cluster_name}-high-cpu-utilization"
   namespace   = "AWS/EC2"
   metric_name = "CPUUtilization"
