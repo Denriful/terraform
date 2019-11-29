@@ -25,10 +25,11 @@
 #  tags = {
 #    Name = "terraform-example"
 resource "aws_launch_configuration" "example" {
-  image_id	= "ami-0c55b159cbfafe1f0"
+  #image_id	= "ami-0c55b159cbfafe1f0"
+  image_id        = var.ami
   #instance_type = "t2.micro"
-  instance_type = var.instance_type
-  key_name = "appuser"
+  instance_type   = var.instance_type
+  key_name        = "appuser"
   #user_data = <<-EOF
 	      #!/bin/bash
   #            echo "Hello, World" > index.html
@@ -37,10 +38,10 @@ resource "aws_launch_configuration" "example" {
   #            nohup busybox httpd -f -p ${var.server_port} &
   #            EOF
 
-  #user_data = data.template_file.user_data.rendered
-  user_data = (length(data.template_file.user_data[*]) > 0 ?
-  data.template_file.user_data[0].rendered : data.template_file.user_data_new[0].rendered
-  )
+  user_data       = data.template_file.user_data.rendered
+  #user_data = (length(data.template_file.user_data[*]) > 0 ?
+  #data.template_file.user_data[0].rendered : data.template_file.user_data_new[0].rendered
+  #)
 
 #  vpc_security_group_ids = [aws_security_group.instance.id]
   security_groups = [aws_security_group.instance.id]
@@ -60,7 +61,7 @@ data "terraform_remote_state" "db" {
 }
 
 data "template_file" "user_data" {
-  count         = var.enable_new_user_data ? 0 : 1
+  #count         = var.enable_new_user_data ? 0 : 1
   
   template      = file("${path.module}/user-data.sh")
 
@@ -68,10 +69,11 @@ data "template_file" "user_data" {
     server_port = var.server_port
     db_address  = data.terraform_remote_state.db.outputs.address
     db_port     = data.terraform_remote_state.db.outputs.port
+    server_text = var.server_text
   }
 }
 
-data "template_file" "user_data_new" {
+/* data "template_file" "user_data_new" {
   count         = var.enable_new_user_data ? 1 : 0
   
   template      = file("${path.module}/user-data-new.sh")
@@ -81,11 +83,17 @@ data "template_file" "user_data_new" {
     #db_address  = data.terraform_remote_state.db.outputs.address
     #db_port     = data.terraform_remote_state.db.outputs.port
   }
-}
+} */
 
 # Define ASG
 resource "aws_autoscaling_group" "example" {
 
+  # Explicitly depend on the launch configuration's name
+  # so each time it's replaced, this ASG is also replaced.
+  # This is needed for Zero-Downtime Deployment.
+
+  name = "${var.cluster_name}-${aws_launch_configuration.example.name}"
+  
   launch_configuration = aws_launch_configuration.example.name
 
   # lets insert vpc subnet ids from data source to ASG  
@@ -108,6 +116,20 @@ resource "aws_autoscaling_group" "example" {
   #max_size = 10
   min_size = var.min_size
   max_size = var.max_size
+
+  # Wait for at least this many instances to pass health checks
+  # before condidering the ASG deployment complete.
+  # This is needed for Zero-Downtime Deployment.
+
+  min_elb_capacity  = var.min_size
+
+  # When replacing this ASG, create the replacement first,
+  # and only after that delete the original.
+  # This is needed for Zero-Downtime Deployment.
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
 
   tag {
