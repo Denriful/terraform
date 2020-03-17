@@ -12,7 +12,8 @@ resource "google_compute_instance" "app" {
   boot_disk {
     initialize_params {
       #      image = "ruby-base"
-      image = "${var.disk_image}"
+      #image = "${var.disk_image}"
+    image = "ubuntu-1604-xenial-v20191217"
     }
   }
 
@@ -20,6 +21,10 @@ resource "google_compute_instance" "app" {
     preemptible = "true"
     automatic_restart = "false"
   }
+
+#  resource "google_compute_address" "app_ip" {
+#    name = "ruby-app-ip"
+#  }
 
   network_interface {
     network = "default"
@@ -37,25 +42,23 @@ resource "google_compute_instance" "app" {
   }
 
   # connection settings for provisioners
-  connection {
-    host 	= google_compute_instance.app[count.index].network_interface.0.access_config.0.nat_ip
-    type        = "ssh"
-    user        = "appuser"
-    agent       = false
-    private_key = "${file(var.provision_private_key)}"
-  }
+#  connection {
+#    host 	= google_compute_instance.app[count.index].network_interface.0.access_config.0.nat_ip
+#    type        = "ssh"
+#    user        = "appuser"
+#    agent       = false
+#    private_key = "${file(var.provision_private_key)}"
+#  }
 
-  provisioner "file" {
-    source      = "files/puma.service"
-    destination = "/tmp/puma.service"
-  }
+#  provisioner "file" {
+#    source      = "files/puma.service"
+#    destination = "/tmp/puma.service"
+#  }
 
-  provisioner "remote-exec" {
-    script = "files/deploy.sh"
-  }
-}
-
-#resource "google_compute_address" "app_ip" {
-#  name = "ruby-app-ip"
+#  provisioner "remote-exec" {
+#    script = "files/deploy.sh"
+#  }
 #}
+
+}
 
