@@ -12,9 +12,9 @@ provider "google" {
 }
 
 resource "google_container_cluster" "primary" {
-  name               = "cluster-2"
+  name               = "cluster-3"
   location           = "us-central1-c"
-  initial_node_count = 2
+  initial_node_count = 3
 
   master_auth {
     username = ""
@@ -25,6 +25,19 @@ resource "google_container_cluster" "primary" {
     }
   }
 
+  addons_config {
+    network_policy_config {
+      disabled = false
+    }
+    http_load_balancing {
+      disabled = false
+    }
+  }
+
+  network_policy {
+    enabled = true
+  }
+
   node_config {
     disk_size_gb = 25
     oauth_scopes = [
@@ -32,9 +45,13 @@ resource "google_container_cluster" "primary" {
       "https://www.googleapis.com/auth/monitoring",
     ]
 
+    machine_type = "g1-small"
+
     metadata = {
       disable-legacy-endpoints = "true"
     }
+
+
 
 #    labels = {
 #      foo = "bar"
